@@ -8,7 +8,6 @@ function SceneSubject(scene, camera, controls) {
     var animationName = ['normal', 'walk_ani_back', 'walk_ani_vor', 'walk_left', 'walk_right', 'warte_pose', 'run_ani_vor', 'run_ani_back', 'run_left','run_right'];
     var activeActionName = 'warte_pose';
     var actualAnimation = 0;
-    var playerDirection = 0;
 
     var rayCaster = new THREE.Raycaster();
 
@@ -211,15 +210,18 @@ function SceneSubject(scene, camera, controls) {
 
     var xSpeed = 0.2;
     var zSpeed = 0.2;
+    var runSpeed = 2;
+    var runRotSpeed = 2;
 
     const time = new THREE.Clock();
 
     this.update = function(controls) {
         if (actions.warte_pose){
 
-            ball = scene.getObjectByName("spider");
+            const ball = scene.getObjectByName("spider");
 
-            if (currentlyPressedKeys[87] == true) {
+            // Pressed On 'W'
+            if (currentlyPressedKeys[87] == true && currentlyPressedKeys[16] != true) {
                 if (actualAnimation != 2){
                     actualAnimation = 2;
                     fadeAction(animationName[actualAnimation], actions);
@@ -231,8 +233,9 @@ function SceneSubject(scene, camera, controls) {
 
                 ball.translateX(deltaX);
                 ball.translateZ(deltaZ);
-
-            } if (currentlyPressedKeys[83] == true) {
+            }
+            //Pressed on 'S'
+            if (currentlyPressedKeys[83] == true && currentlyPressedKeys[16] != true) {
                 if (actualAnimation != 1){
                     actualAnimation = 1;
                     fadeAction(animationName[actualAnimation], actions);
@@ -243,21 +246,67 @@ function SceneSubject(scene, camera, controls) {
                 ball.translateX(deltaX);
                 ball.translateZ(deltaZ);
                 //ball.position.z += ySpeed;
-            } if (currentlyPressedKeys[65] == true) {
+            }
+            //Pressed on 'A'
+            if (currentlyPressedKeys[65] == true && currentlyPressedKeys[16] != true) {
                 if (actualAnimation !=3){
                     actualAnimation = 3;
                     fadeAction(animationName[actualAnimation], actions);
                 }
                 ball.rotation.y += 0.02;
 
-            } if (currentlyPressedKeys[68] == true) {
+            }
+            //Pressed on 'D'
+            if (currentlyPressedKeys[68] == true && currentlyPressedKeys[16] != true) {
                 if (actualAnimation != 4){
                     actualAnimation = 4;
                     fadeAction(animationName[actualAnimation], actions);
                 }
                 ball.rotation.y -= 0.02;
-            } if (currentlyPressedKeys[16] == true) {
+            }
+            //Pressed on 'Shift'
+            if (currentlyPressedKeys[16] == true) {
+                //Pressed on 'W' while 'Shift' pressed
+                if (currentlyPressedKeys[87] == true) {
+                    if (actualAnimation != 6) {
+                        actualAnimation = 6;
+                        fadeAction(animationName[actualAnimation], actions);
+                    }
+                    let deltaX = -runSpeed * xSpeed * Math.sin(ball.rotation.x);
+                    let deltaZ = -runSpeed * zSpeed * Math.cos(ball.rotation.z);
 
+                    ball.translateX(deltaX);
+                    ball.translateZ(deltaZ);
+                }
+                //Pressed on 'S' while 'Shift' pressed
+                if (currentlyPressedKeys[83] == true){
+                    if (actualAnimation != 7) {
+                        actualAnimation = 7;
+                        fadeAction(animationName[actualAnimation], actions);
+                    }
+                    let deltaX = runSpeed * xSpeed * Math.sin(ball.rotation.x);
+                    let deltaZ = runSpeed * zSpeed * Math.cos(ball.rotation.z);
+
+                    ball.translateX(deltaX);
+                    ball.translateZ(deltaZ);
+
+                }
+                //Pressed on 'A' while 'Shift' pressed
+                if (currentlyPressedKeys[65] == true){
+                    if (actualAnimation != 8) {
+                        actualAnimation = 8;
+                        fadeAction(animationName[actualAnimation], actions);
+                    }
+                    ball.rotation.y += runRotSpeed * 0.02;
+                }
+
+                if (currentlyPressedKeys[68] == true){
+                    if (actualAnimation != 9) {
+                        actualAnimation = 9;
+                        fadeAction(animationName[actualAnimation], actions);
+                    }
+                    ball.rotation.y -= runRotSpeed * 0.02;
+                }
             }
             modelMixers.forEach(({mixer}) => {mixer.update(time.getDelta());});
             controls.target = modelMixers[0].fbx.position;
@@ -282,51 +331,6 @@ function SceneSubject(scene, camera, controls) {
     }
 
     this.moveBall = function(keyCode) {
-
         currentlyPressedKeys[keyCode] = true;
-        /*
-        //currentlyPressedKeys[keyCode] = true;
-        ball = scene.getObjectByName("spider");
-        /!*for (var _j = 0; _j < mixers.length; _j++) {
-            mixers[_j].update(time.getDelta());
-        }*!/
-        //lastTime = time;
-        //modelMixers.forEach(({mixer}) => {mixer.update(time.getDelta());});
-        if (keyCode == 87) {
-            actualAnimation = 2;
-            if (!currentlyPressedKeys[87]) {
-                fadeAction(animationName[actualAnimation], actions);
-                currentlyPressedKeys[87] = true;
-            }
-            ball.position.z -= ySpeed;
-            //ball.rotateX(Math.PI / ySpeed)
-        } if (keyCode == 83) {
-            actualAnimation = 1;
-            if (!currentlyPressedKeys[83]) {
-                fadeAction(animationName[actualAnimation], actions);
-                currentlyPressedKeys[83] = true;
-            }            //ball.rotateX(-Math.PI / ySpeed)
-            ball.position.z += ySpeed;
-        } if (keyCode == 65) {
-            actualAnimation = 3;
-            //ball.position.x -= xSpeed;
-            if (!currentlyPressedKeys[65]) {
-                fadeAction(animationName[actualAnimation], actions);
-                currentlyPressedKeys[65] = true;
-            }            //ball.rotateZ(Math.PI / xSpeed)
-            ball.rotation.y += 0.1;
-
-        } if (keyCode == 68) {
-            actualAnimation = 4;
-            //ball.position.x += xSpeed;
-            //ball.rotateY(xSpeed);
-            if (!currentlyPressedKeys[68]) {
-                fadeAction(animationName[actualAnimation], actions);
-                currentlyPressedKeys[68] = true;
-            }            //ball.rotateZ(-Math.PI / xSpeed)
-            ball.rotation.y -= 0.1;
-        } else if (keyCode == 32) {
-            ball.position.set(0, radius, 0);
-        }*/
     }
 }

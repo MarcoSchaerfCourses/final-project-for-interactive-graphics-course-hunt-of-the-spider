@@ -1,6 +1,5 @@
 function SceneManager(canvas) {
 
-    const clock = new THREE.Clock();
     const screenDimensions = {
         width: canvas.width,
         height: canvas.height
@@ -9,8 +8,9 @@ function SceneManager(canvas) {
     var scene = buildScene();
     var renderer = buildRender(screenDimensions);
     var camera = buildCamera(screenDimensions);
-    //camera.lookAt(scene.position);
-    var controls = createController(camera, renderer);
+    //var controls = createController(camera, renderer);
+    var controls = null;
+    var cvx = canvas.getContext("2d");
     var sceneSubjects = createSceneSubjects(scene);
 
     function buildScene() {
@@ -32,7 +32,7 @@ function SceneManager(canvas) {
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         return renderer;
     }
@@ -43,7 +43,7 @@ function SceneManager(canvas) {
         const nearPlane = 0.5;
         const farPlane = 20000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
-        camera.position.set(0,10,50);
+        camera.position.set(0,50,50);
         //camera.position.set(0, 5, 3);
         //camera.lookAt(new THREE.Vector3(0,0,0));
 
@@ -56,6 +56,8 @@ function SceneManager(canvas) {
         controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
         controls.dampingFactor = 0.25;
         controls.screenSpacePanning = false;
+        controls.enablePan = false;
+        controls.enableZoom = false;
         controls.minDistance = 100;
         controls.maxDistance = 1500;
         controls.maxPolarAngle = Math.PI / 2;
@@ -72,11 +74,11 @@ function SceneManager(canvas) {
         return sceneSubjects;
     }
     this.onDocumentKeyUp = function (keyCode) {
-        sceneSubjects[1].activateAction(keyCode);
+        sceneSubjects[1].onKeyRelease(keyCode);
     }
     this.onDocumentKeyDown = function (keyCode) {
         const time = new THREE.Clock();
-        sceneSubjects[1].moveBall(keyCode, time);
+        sceneSubjects[1].onKeyDown(keyCode, time);
     }
 
 
@@ -102,7 +104,7 @@ function SceneManager(canvas) {
         }
 
 
-        controls.update();
+        //controls.update();
         renderer.clear();
         renderer.render(scene, camera);
     }

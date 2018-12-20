@@ -1,18 +1,18 @@
-function Terrain(scene) {
+function Terrain(scene, width, height, fog) {
 
     // frame per second computation
     this.lastDate = (new Date()).getTime();
     this.frames = 0;
     this.fps = 0;
 
-    this.width = 5000;
-    this.height = 5000;
+    this.width = width;
+    this.height = height;
     this.segments = 64;
     this.smoothingFactor = 400;
     this.terrain = new Array();
     this.border = true;
     this.info = false;
-    this.fog = 0.001;
+    this.fog = fog;
     this.deepth = -1;
     this.deepthGround = -80;
 
@@ -23,7 +23,7 @@ function Terrain(scene) {
     this.textureRepeatX = Math.ceil(this.width / 100);
     this.textureRepeatY = Math.ceil(this.height / 100);
     this.textureObject.repeat.set(this.textureRepeatX, this.textureRepeatY);
-
+    this.helper = null;
     this.material = new THREE.MeshBasicMaterial({
         map: this.textureObject
     });
@@ -50,7 +50,9 @@ function Terrain(scene) {
         this.terrain = terrainGeneration.diamondSquare();
 
         this.geometry = new THREE.PlaneGeometry(this.width, this.height, this.segments, this.segments);
+        this.geometry.receiveShadow = true;
         this.geometryGround = new THREE.PlaneGeometry(this.width, this.height, this.segments, this.segments);
+        this.geometryGround.receiveShadow = true;
         var index = 0;
         for(var i = 0; i <= this.segments; i++) {
             for(var j = 0; j <= this.segments; j++) {
@@ -217,7 +219,11 @@ function Terrain(scene) {
         this.combined.merge(baseGeometry);
 
         this.combined.merge(this.geometry);
+        this.combined.computeFaceNormals();
+        this.combined.computeVertexNormals();
         this.mesh = new THREE.Mesh(this.combined, this.material);
+
+        this.mesh.receiveShadow = true;
 
         this.mesh.rotation.x = Math.PI / 180 * (-90);
         scene.add(this.mesh);
@@ -260,23 +266,33 @@ function Terrain(scene) {
         scene.remove(this.mesh);
         scene.remove(this.meshGround);
         if(this.border) {
+            this.combined.computeFaceNormals();
+            this.combinedGround.computeFaceNormals();
             this.mesh = new THREE.Mesh(this.combined, this.material);
             this.meshGround = new THREE.Mesh(this.combinedGround, this.materialGround);
         }
         else {
+            this.geometry.computeFaceNormals();
+            this.geometryGround.computeFaceNormals();
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.meshGround = new THREE.Mesh(this.geometryGround, this.materialGround);
         }
 
         this.meshGround.rotation.x = Math.PI / 180 * (-90);
+        this.meshGround.receiveShadow = true;
         scene.add(this.meshGround);
+
+
         this.mesh.rotation.x = Math.PI / 180 * (-90);
+        this.mesh.receiveShadow = true;
+        this.helper = new THREE.FaceNormalsHelper(this.mesh, 10, 0x00ff00, 1);
+
         scene.add(this.mesh);
+        scene.add(this.helper);
     };
 
     this.setFog = function(fog) {
         this.fog = fog;
         scene.fog = new THREE.FogExp2(0x000000, this.fog);
     };
-
 };

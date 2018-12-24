@@ -10,7 +10,6 @@ function SceneManager(canvas) {
     var camera = buildCamera(screenDimensions);
     //var controls = createController(camera, renderer);
     var controls = null;
-    var cvx = canvas.getContext("2d");
     var sceneSubjects = createSceneSubjects(scene);
 
     function buildScene() {
@@ -99,10 +98,9 @@ function SceneManager(canvas) {
     this.update = function() {
 
         for(let i=0; i<sceneSubjects.length; i++){
-            sceneSubjects[i].update(controls);
+            sceneSubjects[i].update();
             //this.onWindowResize();
         }
-
 
         //controls.update();
         renderer.clear();

@@ -18,9 +18,7 @@ function GeneralLights(scene) {
 	scene.add(dl);
 
 	var hl = new THREE.HemisphereLight(0xC0C0C0, 0x826F26);
-	var helperHl = new THREE.HemisphereLightHelper(hl,10, 0x00ff00, 1);
 	scene.add(hl);
-	scene.add(helperHl);
 
     //Create a helper for the shadow camera (optional)
     var helper = new THREE.CameraHelper( dl.shadow.camera );

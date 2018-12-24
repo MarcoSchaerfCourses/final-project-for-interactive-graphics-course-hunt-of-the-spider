@@ -7,17 +7,25 @@ function SceneSubject(scene, camera) {
     var animationName = ['normal', 'walk_ani_back', 'walk_ani_vor', 'walk_left', 'walk_right', 'warte_pose', 'run_ani_vor', 'run_ani_back', 'run_left','run_right'];
     var activeActionName = 'warte_pose';
     var actualAnimation = 0;
-    var charRotation = new THREE.Vector3();
-    var direction = new THREE.Vector3();
     var threeAdded = false;
     var collidableMeshList = [];
     var enemies = [];
+    var box;
+    var charRotation = new THREE.Vector3();
 
     var rayCaster = new THREE.Raycaster();
 
 
     function getExtantion(filename) {
         return (/[.]/.exec(filename)) ? /[^.]+$/.exec(filename) : undefined;
+    }
+
+    function arrayRemove(arr, value) {
+
+        return arr.filter(function(ele){
+            return ele != value;
+        });
+
     }
 
     function initilizeAction(clips) {
@@ -171,7 +179,7 @@ function SceneSubject(scene, camera) {
         actions.warte_pose.play();
         //fbx.add(camera);
         fbx.boundingBox = new THREE.Box3().setFromObject(fbx);
-        var box = new THREE.BoxHelper( fbx, 0xffff00 );
+        box = new THREE.BoxHelper( fbx, 0xffff00 );
         scene.add( box );
         collidableMeshList.push(fbx);
         scene.add(fbx);
@@ -196,23 +204,36 @@ function SceneSubject(scene, camera) {
             }
         })*/
         //collidableMeshList.push(object);
-
-        scene.add(object);
     }
 
-    function randomPlaceOnTerrain(width,height, object, numOfInstance) {
+    function randomPlaceOnTerrainTree(width,height, numOfInstance, object) {
         for (var i = 0; i<numOfInstance; i++ ){
             var instance = object.clone();
             instance.position.x = (Math.random() - 0.5) * width;
             instance.position.z = (Math.random() - 0.5) * height;
-            if (instance.name == 'tree'){
-                collidableMeshList.push(instance.getObjectByName('trunk'));
-            }
-
-            if (instance.name == 'enemy'){
-                enemies.push(instance.getObjectByName('enemy'))
-            }
+            collidableMeshList.push(instance.getObjectByName('trunk'));
             placeOnTerrain(instance);
+            scene.add(instance);
+        }
+    }
+
+    function randomPlaceOnTerrainEnemy(width,height, numOfInstance) {
+        for (var i = 0; i<numOfInstance; i++ ){
+            const enemy = new Enemy();
+            //var instance = object.body.clone();
+            enemy.body.position.x = (Math.random() - 0.5) * width;
+            enemy.body.position.z = (Math.random() - 0.5) * height;
+            enemy.body.scale.set(0.5,0.5,0.5);
+            enemy.body.translateY(1);
+            enemy.boundingBox =  new THREE.Box3().setFromObject(enemy.body);
+            enemy.boxHelper = new THREE.BoxHelper( enemy.body, 0xffff00 );
+
+
+            console.log('Enemy created');
+            placeOnTerrain(enemy.body);
+            scene.add(enemy.body);
+            scene.add(enemy.boxHelper);
+            enemies.push(enemy);
         }
     }
 
@@ -251,13 +272,12 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        //placeOnTerrain(tree);
-        randomPlaceOnTerrain(5000,5000, tree, 500);
+        randomPlaceOnTerrainTree(5000,5000, 500, tree);
 
 
     }
 
-    var t = new Terrain(scene, 5000, 5000, 0.01);
+    var t = new Terrain(scene, 5000, 5000, 0.005);
     t.updateTerrain(t.width,t.height,t.segments,t.smoothingFactor);
 
 
@@ -287,11 +307,12 @@ function SceneSubject(scene, camera) {
     var skybox = new THREE.Mesh(geometry, cubeMaterials);
     scene.add(skybox);
 
-    function createEnemy(x, z) {
-        enemy = new Enemy(scene);
-        enemy.body.scale.set(0.2,0.2,0.2);
-        placeOnTerrain(enemy.body);
-        enemy.body.translateY(2);
+    function createEnemy() {
+        //enemy.body.scale.set(0.2,0.2,0.2);
+        //placeOnTerrain(enemy.body);
+        //enemies.push(enemy);
+        randomPlaceOnTerrainEnemy(1000,1000, 10);
+        //enemy.body.translateY(2);
     }
 
 
@@ -302,7 +323,7 @@ function SceneSubject(scene, camera) {
 
     const time = new THREE.Clock();
 
-    this.update = function(controls) {
+    this.update = function() {
         if (actions.warte_pose){
 
             const spider = scene.getObjectByName("spider");
@@ -451,7 +472,7 @@ function SceneSubject(scene, camera) {
             if (t.combinedGround){
                 if (!threeAdded){
                     addTree();
-                    createEnemy(scene);
+                    createEnemy();
 
                     //randomPlacingOnTerrain(5000, 5000, spider);
                     /*let tree = createTree();
@@ -461,30 +482,32 @@ function SceneSubject(scene, camera) {
                 }
                 if (enemies.length > 0){
                     enemies.forEach(function (enemy) {
-                        enemy.moveForward(0.01);
+                        enemy.moveForward();
+                        enemy.boundingBox.setFromObject(enemy.body);
+                        placeOnTerrain(enemy.body);
+                        enemy.boxHelper.update();
                     })
                 }
-                rayCaster.set(modelMixers[0].fbx.position.setY(5000), new THREE.Vector3(0, -1, 0));
+                rayCaster.set(modelMixers[0].fbx.position.setY(1000), new THREE.Vector3(0, -1, 0));
                 var intersects = rayCaster.intersectObject(t.meshGround);
                 if (intersects.length > 0){
-                    //modelMixers[0].fbx.up = intersects[0].face.normal;//Z axis up
+                    modelMixers[0].fbx.up = intersects[0].face.normal;//Z axis up
                     /*if (intersects[0].face.normal.z != 1){
                         alert("Yooohhhaminaaaaa");
                     }*/
 
                     /*charRotation.set(
                         modelMixers[0].fbx.position.x + intersects[0].face.normal.x,
-                        modelMixers[0].fbx.position.y + intersects[0].face.normal.y,
+                        modelMixers[0].fbx.position.y,
                         modelMixers[0].fbx.position.z + intersects[0].face.normal.z
-                    );*/
+                    );
 
-                    //modelMixers[0].fbx.lookAt(charRotation);
+                    modelMixers[0].fbx.lookAt(charRotation);*/
 
-                    ///var newDir = new THREE.Vector3(intersects[0].face.normal.x,intersects[0].face.normal.y,intersects[0].face.normal.z);
-///
-                    ///var pos = new THREE.Vector3();
-                    ///pos.addVectors(newDir, modelMixers[0].fbx.position);
-                    ///modelMixers[0].fbx.lookAt(pos);
+                    /*var newDir = new THREE.Vector3(intersects[0].face.normal.x,spider.rotation.y,intersects[0].face.normal.z);
+                    var pos = new THREE.Vector3();
+                    pos.addVectors(newDir, modelMixers[0].fbx.position);
+                    modelMixers[0].fbx.lookAt(pos);*/
 
 
 
@@ -496,6 +519,27 @@ function SceneSubject(scene, camera) {
                     //modelMixers[0].fbx.position.copy(intersects[0].point);
                     modelMixers[0].fbx.position.setY(intersects[0].point.y);
                 }
+
+
+                /*rayCaster.set(new THREE.Vector3(originPoint.x, spider.boundingBox.min.y, originPoint.z), new THREE.Vector3(0,0,1));
+                const enemyBodies = enemies.map(enemy=> enemy.body);
+                var intersectsEnemy = rayCaster.intersectObjects(enemyBodies);
+                if ( intersectsEnemy.length > 0 && intersectsEnemy[0].distance - localCenter.z < 20 ) {
+                    scene.remove(intersectsEnemy[0].object);
+                }*/
+                var collusion = false;
+                enemies.forEach(function (enemy) {
+                    if (spider.boundingBox.intersectsBox(enemy.boundingBox)) {
+                        collusion = true;
+                        enemies = arrayRemove(enemies, enemy);
+                        scene.remove(enemy.body);
+                        score += 1;
+                        spider.scale.set(0.1,0.1,0.1);
+                    }
+                })
+                box.update();
+                spider.boundingBox.setFromObject(spider);
+
             }
 
         }

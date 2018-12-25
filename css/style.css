@@ -5,3 +5,26 @@ html, body {
     overflow: hidden;
     margin: 0;
 }
+
+.scoreClass {
+    font-size: 35px;
+    padding: 3px;
+    font-weight: bold;
+    float: left;
+    display: inline-block;
+    border: 2px solid black;
+    border-color: black;
+    position: absolute;
+    background-color:rgba(255,0,0,0.3);
+}
+
+.timerClass {
+    font-size: 35px;
+    padding: 3px;
+    font-weight: bold;
+    float: right;
+    margin-left:1110px;
+    display: inline-block;
+    position: absolute;
+    background-color:rgba(255,0,0,0.3);
+}

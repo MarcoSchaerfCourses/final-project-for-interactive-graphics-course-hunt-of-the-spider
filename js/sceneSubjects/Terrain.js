@@ -8,7 +8,7 @@ function Terrain(scene, width, height, fog) {
     this.width = width;
     this.height = height;
     this.segments = 64;
-    this.smoothingFactor = 400;
+    this.smoothingFactor = 100;
     this.terrain = new Array();
     this.border = true;
     this.info = false;

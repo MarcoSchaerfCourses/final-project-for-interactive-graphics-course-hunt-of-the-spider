@@ -43,8 +43,6 @@ function SceneManager(canvas) {
         const farPlane = 20000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
         camera.position.set(0,50,50);
-        //camera.position.set(0, 5, 3);
-        //camera.lookAt(new THREE.Vector3(0,0,0));
 
         return camera;
     }
@@ -88,7 +86,6 @@ function SceneManager(canvas) {
         screenDimensions.height = height;
         camera.aspect = screenDimensions.width / screenDimensions.height;
         camera.updateProjectionMatrix();
-        //camera = buildCamera(width, height)
 
         renderer.setSize(width, height);
 

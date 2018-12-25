@@ -11,7 +11,9 @@ function SceneSubject(scene, camera) {
     var collidableMeshList = [];
     var enemies = [];
     var box;
-    var charRotation = new THREE.Vector3();
+    var score = 0;
+    var scoreBox = document.getElementById("score");
+    var quaternion = new THREE.Quaternion();
 
     var rayCaster = new THREE.Raycaster();
 
@@ -27,6 +29,29 @@ function SceneSubject(scene, camera) {
         });
 
     }
+
+    function startTimer(duration, display) {
+        var timer = duration, minutes, seconds;
+        setInterval(function () {
+            minutes = parseInt(timer / 60, 10)
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                timer = duration;
+            }
+
+            if (timer == duration && score < 20){
+                alert("game over")
+            }
+        }, 1000);
+    }
+
+
 
     function initilizeAction(clips) {
         actions.normal = mixer.clipAction(THREE.AnimationClip.findByName(clips,'Spider_Armature|normal'));
@@ -124,10 +149,6 @@ function SceneSubject(scene, camera) {
             }
             var loader = new THREE.FBXLoader();
             loader.load(url, callbackFbx);
-            //mixer = new THREE.AnimationMixer(model);
-            // animations is a list of THREE.AnimationClip
-            //mixer.clipAction(model.animations[0]).play();
-            //scene.add(model);
         }
     }
 
@@ -163,13 +184,12 @@ function SceneSubject(scene, camera) {
     }
 
     function loadModelFbx(fbx, position) {
-        var scale = 0.1;
         //fbx.remove(fbx.getObjectByName('Hemi'));
         fbx.name="spider";
         fbx.castShadow = true;
         fbx.receiveShadow = true;
         fbx.position.set(position.x, position.y, position.z);
-        fbx.scale.set(scale,scale,scale);
+        fbx.scale.set(0.1,0.1,0.1);
         // model is a THREE.Group (THREE.Object3D)
         mixer = new THREE.AnimationMixer(fbx);
         // animations is a list of THREE.AnimationClip
@@ -197,13 +217,7 @@ function SceneSubject(scene, camera) {
             //modelMixers[0].fbx.rotateX(-Math.PI / 2);
             object.position.setY(intersects[0].point.y);
         }
-        
-        /*object.traverse(new function (child) {
-            if (!(child instanceof THREE.Mesh)) {
-                collidableMeshList.push(child);
-            }
-        })*/
-        //collidableMeshList.push(object);
+
     }
 
     function randomPlaceOnTerrainTree(width,height, numOfInstance, object) {
@@ -220,7 +234,6 @@ function SceneSubject(scene, camera) {
     function randomPlaceOnTerrainEnemy(width,height, numOfInstance) {
         for (var i = 0; i<numOfInstance; i++ ){
             const enemy = new Enemy();
-            //var instance = object.body.clone();
             enemy.body.position.x = (Math.random() - 0.5) * width;
             enemy.body.position.z = (Math.random() - 0.5) * height;
             enemy.body.scale.set(0.5,0.5,0.5);
@@ -272,12 +285,12 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        randomPlaceOnTerrainTree(5000,5000, 500, tree);
+        randomPlaceOnTerrainTree(2500,2500, 100, tree);
 
 
     }
 
-    var t = new Terrain(scene, 5000, 5000, 0.005);
+    var t = new Terrain(scene, 2500, 2500, 0.001);
     t.updateTerrain(t.width,t.height,t.segments,t.smoothingFactor);
 
 
@@ -308,10 +321,8 @@ function SceneSubject(scene, camera) {
     scene.add(skybox);
 
     function createEnemy() {
-        //enemy.body.scale.set(0.2,0.2,0.2);
         //placeOnTerrain(enemy.body);
-        //enemies.push(enemy);
-        randomPlaceOnTerrainEnemy(1000,1000, 10);
+        randomPlaceOnTerrainEnemy(1000,1000, 50);
         //enemy.body.translateY(2);
     }
 
@@ -473,12 +484,10 @@ function SceneSubject(scene, camera) {
                 if (!threeAdded){
                     addTree();
                     createEnemy();
-
-                    //randomPlacingOnTerrain(5000, 5000, spider);
-                    /*let tree = createTree();
-                    tree.scale.set(50, 50, 50);
-                    placeOnTerrain(tree);
-                    */threeAdded = true;
+                    threeAdded = true;
+                    var fiveMinutes = 60 * 1,
+                        display = document.querySelector('#timer');
+                    startTimer(fiveMinutes, display);
                 }
                 if (enemies.length > 0){
                     enemies.forEach(function (enemy) {
@@ -488,36 +497,19 @@ function SceneSubject(scene, camera) {
                         enemy.boxHelper.update();
                     })
                 }
+
                 rayCaster.set(modelMixers[0].fbx.position.setY(1000), new THREE.Vector3(0, -1, 0));
                 var intersects = rayCaster.intersectObject(t.meshGround);
                 if (intersects.length > 0){
-                    modelMixers[0].fbx.up = intersects[0].face.normal;//Z axis up
-                    /*if (intersects[0].face.normal.z != 1){
-                        alert("Yooohhhaminaaaaa");
+
+                    /*if (spider.up != intersects[0].face.normal){
+                        quaternion.setFromUnitVectors(spider.up, intersects[0].face.normal);
+                        spider.applyQuaternion(quaternion);
+                        spider.up = intersects[0].face.normal;//Z axis up
+                        //spider.rotateX(-Math.PI /2);
                     }*/
 
-                    /*charRotation.set(
-                        modelMixers[0].fbx.position.x + intersects[0].face.normal.x,
-                        modelMixers[0].fbx.position.y,
-                        modelMixers[0].fbx.position.z + intersects[0].face.normal.z
-                    );
-
-                    modelMixers[0].fbx.lookAt(charRotation);*/
-
-                    /*var newDir = new THREE.Vector3(intersects[0].face.normal.x,spider.rotation.y,intersects[0].face.normal.z);
-                    var pos = new THREE.Vector3();
-                    pos.addVectors(newDir, modelMixers[0].fbx.position);
-                    modelMixers[0].fbx.lookAt(pos);*/
-
-
-
-                    //modelMixers[0].fbx.localToWorld(charRotation);
-                    //modelMixers[0].fbx.lookAt(newPoint .normalize());
-                    //intersects[0].face.co
-                    //modelMixers[0].fbx.position.set(0,0,0);
-                    //modelMixers[0].fbx.lookAt(intersects[0].face.normal);
-                    //modelMixers[0].fbx.position.copy(intersects[0].point);
-                    modelMixers[0].fbx.position.setY(intersects[0].point.y);
+                    spider.position.setY(intersects[0].point.y);
                 }
 
 
@@ -534,12 +526,12 @@ function SceneSubject(scene, camera) {
                         enemies = arrayRemove(enemies, enemy);
                         scene.remove(enemy.body);
                         score += 1;
-                        spider.scale.set(0.1,0.1,0.1);
+                        //spider.scale.set(score/20,score/20,score/20);
                     }
                 })
                 box.update();
                 spider.boundingBox.setFromObject(spider);
-
+                scoreBox.innerHTML = "Score: " + score;
             }
 
         }

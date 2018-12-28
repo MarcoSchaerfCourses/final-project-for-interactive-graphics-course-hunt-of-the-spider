@@ -14,8 +14,54 @@ function SceneSubject(scene, camera) {
     var score = 0;
     var scoreBox = document.getElementById("score");
     var quaternion = new THREE.Quaternion();
+    var staminaMax = 1000;
+    var staminaCurrent = staminaMax;
+    var staminaHealInterval;
+    var staminaTick = 100;
+    var staminHealPerTick = 10;
+
+    var $sBar3 = $(".sBar .sBarStatus.s3");
+    var $sBar2 = $(".sBar .sBarStatus.s2");
+    var $sBar1 = $(".sBar .sBarStatus.s1");
 
     var rayCaster = new THREE.Raycaster();
+
+    var healStamina = function() {
+        staminaCurrent = Math.min(staminaCurrent + staminHealPerTick, staminaMax);
+        var rawPct = staminaCurrent / staminaMax;
+
+        var s1Pct = (function() {
+            if (rawPct <= (2 / 3)) { return 0; }
+            return (rawPct - (2 / 3)) / (1 / 3);
+        })();
+
+        var s2Pct = (function() {
+            if (rawPct <= (1 / 3)) { return 0; }
+            if (rawPct >= (2 / 3)) { return 1; }
+            return (rawPct - (1 / 3)) / (1 / 3);
+        })();
+
+        var s3Pct = (function() {
+            if (rawPct >= (1 / 3)) { return 1; }
+            return (rawPct - (0 / 3)) / (1 / 3);
+        })();
+
+        $sBar3.css("width", 100 * s3Pct + "%");
+        $sBar2.css("width", 100 * s2Pct + "%");
+        $sBar1.css("width", 100 * s1Pct + "%");
+
+        if (staminaCurrent >= staminaMax) {
+            clearInterval(staminaHealInterval);
+            staminaHealInterval = null;
+        }
+    };
+
+    var dingStamina = function(amount) {
+        staminaCurrent = Math.max(staminaCurrent - amount, 0);
+        if (!staminaHealInterval) {
+            staminaHealInterval = setInterval(healStamina, staminaTick);
+        }
+    }
 
 
     function getExtantion(filename) {
@@ -250,6 +296,17 @@ function SceneSubject(scene, camera) {
         }
     }
 
+    function randomPlaceOnTerrainBall(width, height, numOfInstance, object) {
+        for (var i = 0; i<numOfInstance; i++ ){
+            var instance = object.clone();
+            instance.position.x = (Math.random() - 0.5) * width;
+            instance.position.z = (Math.random() - 0.5) * height;
+            collidableMeshList.push(instance);
+            placeOnTerrain(instance);
+            scene.add(instance);
+        }
+    }
+
     function addTree() {
         var textureObject = new THREE.TextureLoader();
         textureObject.load('images/textures/tree.jpeg');
@@ -286,8 +343,14 @@ function SceneSubject(scene, camera) {
         tree.scale.set(30,30,30);
 
         randomPlaceOnTerrainTree(2500,2500, 100, tree);
+    }
 
 
+
+    function addStaminaBall() {
+        var ball = new THREE.Mesh(new THREE.SphereGeometry(10),new THREE.MeshLambertMaterial( {color: 0xFF0000}));
+
+        randomPlaceOnTerrainBall(2500, 2500, 100, ball);
     }
 
     var t = new Terrain(scene, 2500, 2500, 0.001);
@@ -484,6 +547,7 @@ function SceneSubject(scene, camera) {
                 if (!threeAdded){
                     addTree();
                     createEnemy();
+                    addStaminaBall();
                     threeAdded = true;
                     var fiveMinutes = 60 * 1,
                         display = document.querySelector('#timer');

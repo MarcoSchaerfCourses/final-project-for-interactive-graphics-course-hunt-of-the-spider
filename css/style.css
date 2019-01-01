@@ -23,8 +23,9 @@ html, body {
     padding: 3px;
     font-weight: bold;
     float: right;
-    margin-left:1110px;
     display: inline-block;
+    top: 0px;
+    right: 0px;
     position: absolute;
     background-color:rgba(255,0,0,0.3);
 }
@@ -50,4 +51,10 @@ html, body {
 
     width: 5%;
     position: relative;
+}
+
+#gameover {
+    display: block;
+    position: absolute;
+    visibility: hidden;
 }

@@ -18,7 +18,8 @@ function SceneSubject(scene, camera) {
     var rayCaster = new THREE.Raycaster();
     const staminaBar = document.querySelector('#stamina');
     const progressBar = document.querySelector('#progress');
-
+    var noStamina = false;
+    var gameOver = document.getElementById('gameover');
     let percentComplete = 100;
 
     const updateAmount = 0.5;
@@ -52,7 +53,7 @@ function SceneSubject(scene, camera) {
             }
 
             if (timer == duration && score < 20){
-                alert("game over")
+                gameOver.style.visibility = 'visible';
             }
         }, 1000);
     }
@@ -397,7 +398,7 @@ function SceneSubject(scene, camera) {
             }*/
 
             // Pressed On 'W'
-            if (currentlyPressedKeys[87] == true && currentlyPressedKeys[16] != true) {
+            if (currentlyPressedKeys[87] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
                 if (actualAnimation != 2){
                     actualAnimation = 2;
                     fadeAction(animationName[actualAnimation], actions);
@@ -413,7 +414,7 @@ function SceneSubject(scene, camera) {
                 }
             }
             //Pressed on 'S'
-            if (currentlyPressedKeys[83] == true && currentlyPressedKeys[16] != true) {
+            if (currentlyPressedKeys[83] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
                 if (actualAnimation != 1){
                     actualAnimation = 1;
                     fadeAction(animationName[actualAnimation], actions);
@@ -428,7 +429,7 @@ function SceneSubject(scene, camera) {
                 }
             }
             //Pressed on 'A'
-            if (currentlyPressedKeys[65] == true && currentlyPressedKeys[16] != true) {
+            if (currentlyPressedKeys[65] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
                 if (actualAnimation !=3){
                     actualAnimation = 3;
                     fadeAction(animationName[actualAnimation], actions);
@@ -437,7 +438,7 @@ function SceneSubject(scene, camera) {
 
             }
             //Pressed on 'D'
-            if (currentlyPressedKeys[68] == true && currentlyPressedKeys[16] != true) {
+            if (currentlyPressedKeys[68] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
                 if (actualAnimation != 4){
                     actualAnimation = 4;
                     fadeAction(animationName[actualAnimation], actions);
@@ -487,13 +488,14 @@ function SceneSubject(scene, camera) {
                     }
                     spider.rotation.y -= runRotSpeed * 0.02;
                 }
-                percentComplete -= 0.5;
+                percentComplete -= 0.1;
 
                 //progressBar.style.width = percentComplete + '%';
 
                 if (percentComplete <= 0) {
                     //progressBar.style.backgroundColor = 'blue';
                     percentComplete = 0;
+                    noStamina = true;
                 }
             }
             modelMixers.forEach(({mixer}) => {mixer.update(time.getDelta());});
@@ -563,7 +565,7 @@ function SceneSubject(scene, camera) {
                 })
                 staminaBalls.forEach(function (staminaBall) {
                     if (spider.boundingBox.intersectsBox(staminaBall.boundingBox)) {
-                        percentComplete += 20;
+                        percentComplete += 50;
 
                         staminaBalls = arrayRemove(staminaBalls, staminaBall);
                         scene.remove(staminaBall);
@@ -573,12 +575,11 @@ function SceneSubject(scene, camera) {
                 spider.boundingBox.setFromObject(spider);
                 if (percentComplete <= 100 && currentlyPressedKeys[16] == false) {
                     percentComplete += 0.1;
+                    noStamina = false;
                 }
                 if ( percentComplete >= 100 ) {
-
-                    progressBar.style.backgroundColor = 'blue'
+                    //progressBar.style.backgroundColor = 'blue'
                     percentComplete = 100;
-
                 }
                 scoreBox.innerHTML = "Score: " + score;
                 progressBar.style.width = percentComplete + '%';

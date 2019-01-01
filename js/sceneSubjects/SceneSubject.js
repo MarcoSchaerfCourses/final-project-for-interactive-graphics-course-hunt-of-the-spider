@@ -10,58 +10,18 @@ function SceneSubject(scene, camera) {
     var threeAdded = false;
     var collidableMeshList = [];
     var enemies = [];
+    var staminaBalls = [];
     var box;
     var score = 0;
     var scoreBox = document.getElementById("score");
     var quaternion = new THREE.Quaternion();
-    var staminaMax = 1000;
-    var staminaCurrent = staminaMax;
-    var staminaHealInterval;
-    var staminaTick = 100;
-    var staminHealPerTick = 10;
-
-    var $sBar3 = $(".sBar .sBarStatus.s3");
-    var $sBar2 = $(".sBar .sBarStatus.s2");
-    var $sBar1 = $(".sBar .sBarStatus.s1");
-
     var rayCaster = new THREE.Raycaster();
+    const staminaBar = document.querySelector('#stamina');
+    const progressBar = document.querySelector('#progress');
 
-    var healStamina = function() {
-        staminaCurrent = Math.min(staminaCurrent + staminHealPerTick, staminaMax);
-        var rawPct = staminaCurrent / staminaMax;
+    let percentComplete = 100;
 
-        var s1Pct = (function() {
-            if (rawPct <= (2 / 3)) { return 0; }
-            return (rawPct - (2 / 3)) / (1 / 3);
-        })();
-
-        var s2Pct = (function() {
-            if (rawPct <= (1 / 3)) { return 0; }
-            if (rawPct >= (2 / 3)) { return 1; }
-            return (rawPct - (1 / 3)) / (1 / 3);
-        })();
-
-        var s3Pct = (function() {
-            if (rawPct >= (1 / 3)) { return 1; }
-            return (rawPct - (0 / 3)) / (1 / 3);
-        })();
-
-        $sBar3.css("width", 100 * s3Pct + "%");
-        $sBar2.css("width", 100 * s2Pct + "%");
-        $sBar1.css("width", 100 * s1Pct + "%");
-
-        if (staminaCurrent >= staminaMax) {
-            clearInterval(staminaHealInterval);
-            staminaHealInterval = null;
-        }
-    };
-
-    var dingStamina = function(amount) {
-        staminaCurrent = Math.max(staminaCurrent - amount, 0);
-        if (!staminaHealInterval) {
-            staminaHealInterval = setInterval(healStamina, staminaTick);
-        }
-    }
+    const updateAmount = 0.5;
 
 
     function getExtantion(filename) {
@@ -301,9 +261,10 @@ function SceneSubject(scene, camera) {
             var instance = object.clone();
             instance.position.x = (Math.random() - 0.5) * width;
             instance.position.z = (Math.random() - 0.5) * height;
-            collidableMeshList.push(instance);
             placeOnTerrain(instance);
+            instance.boundingBox =  new THREE.Box3().setFromObject(instance);
             scene.add(instance);
+            staminaBalls.push(instance);
         }
     }
 
@@ -484,7 +445,7 @@ function SceneSubject(scene, camera) {
                 spider.rotation.y -= 0.02;
             }
             //Pressed on 'Shift'
-            if (currentlyPressedKeys[16] == true) {
+            if (currentlyPressedKeys[16] == true && percentComplete > 0) {
                 //Pressed on 'W' while 'Shift' pressed
                 if (currentlyPressedKeys[87] == true) {
                     if (actualAnimation != 6) {
@@ -526,14 +487,21 @@ function SceneSubject(scene, camera) {
                     }
                     spider.rotation.y -= runRotSpeed * 0.02;
                 }
+                percentComplete -= 0.5;
+
+                //progressBar.style.width = percentComplete + '%';
+
+                if (percentComplete <= 0) {
+                    //progressBar.style.backgroundColor = 'blue';
+                    percentComplete = 0;
+                }
             }
             modelMixers.forEach(({mixer}) => {mixer.update(time.getDelta());});
-            /*modelMixers[0].fbx.getWorldPosition(controls.target);
 
+            /*modelMixers[0].fbx.getWorldPosition(controls.target);
             direction.subVectors( camera.position, controls.target );
             direction.normalize().multiplyScalar( 100 );
             camera.position.copy( direction.add( controls.target ) );*/
-
             //controls.target= modelMixers[0].fbx.position;
 
             var relativeCameraOffset = new THREE.Vector3(0,200,400);
@@ -593,9 +561,27 @@ function SceneSubject(scene, camera) {
                         //spider.scale.set(score/20,score/20,score/20);
                     }
                 })
+                staminaBalls.forEach(function (staminaBall) {
+                    if (spider.boundingBox.intersectsBox(staminaBall.boundingBox)) {
+                        percentComplete += 20;
+
+                        staminaBalls = arrayRemove(staminaBalls, staminaBall);
+                        scene.remove(staminaBall);
+                    }
+                })
                 box.update();
                 spider.boundingBox.setFromObject(spider);
+                if (percentComplete <= 100 && currentlyPressedKeys[16] == false) {
+                    percentComplete += 0.1;
+                }
+                if ( percentComplete >= 100 ) {
+
+                    progressBar.style.backgroundColor = 'blue'
+                    percentComplete = 100;
+
+                }
                 scoreBox.innerHTML = "Score: " + score;
+                progressBar.style.width = percentComplete + '%';
             }
 
         }

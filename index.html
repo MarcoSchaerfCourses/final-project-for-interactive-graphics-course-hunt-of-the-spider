@@ -15,8 +15,14 @@
 
 		<div id="gameover">
 			<h1><img src="./assets/gameover.png" alt=""></h1>
-			<p class="score">SCORE : <span ></span></p>
-			<button onclick="javascript:redmach.restart(); document.getElementById('score').style.display='block'">Restart</button>
+			<p class="score">SCORE : <span >0</span></p>
+			<a href="#" onClick="document.location.reload(true)" class="restartButton">Play again</a>
+		</div>
+		
+		<div id="youwin">
+			<h1><img src="./assets/youwin.png" alt=""></h1>
+			<p class="score">SCORE : <span>0</span></p>
+			<a href="#" onclick="document.location.reload(true)" class="restartButton">Play again</a>
 		</div>
 
 		<canvas id="canvas"></canvas>

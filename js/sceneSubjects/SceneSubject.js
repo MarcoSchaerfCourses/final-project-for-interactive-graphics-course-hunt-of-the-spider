@@ -1,5 +1,7 @@
 function SceneSubject(scene, camera) {
 
+    const mapWidth = 1000;
+    const mapHeight = 1000;
     var mixer = null;
     var actions = {};
     var currentlyPressedKeys = {};
@@ -20,6 +22,8 @@ function SceneSubject(scene, camera) {
     const progressBar = document.querySelector('#progress');
     var noStamina = false;
     var gameOver = document.getElementById('gameover');
+    var gameOverScore = document.querySelector('#score');
+    var youWin = document.getElementById('youwin');
     let percentComplete = 100;
 
     const updateAmount = 0.5;
@@ -54,6 +58,14 @@ function SceneSubject(scene, camera) {
 
             if (timer == duration && score < 20){
                 gameOver.style.visibility = 'visible';
+                document.getElementsByTagName("span")[4].innerHTML = score;
+                document.removeEventListener("keydown", true);
+                document.removeEventListener("keyup", true);
+            }
+
+            if (score == 20) {
+                youWin.style.visibility = 'visible';
+                document.getElementsByTagName("span")[5].innerHTML = score;
             }
         }, 1000);
     }
@@ -304,18 +316,22 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        randomPlaceOnTerrainTree(2500,2500, 100, tree);
+        randomPlaceOnTerrainTree(mapWidth,mapHeight, 100, tree);
     }
-
-
 
     function addStaminaBall() {
         var ball = new THREE.Mesh(new THREE.SphereGeometry(10),new THREE.MeshLambertMaterial( {color: 0xFF0000}));
 
-        randomPlaceOnTerrainBall(2500, 2500, 100, ball);
+        randomPlaceOnTerrainBall(mapWidth, mapHeight, 100, ball);
     }
 
-    var t = new Terrain(scene, 2500, 2500, 0.001);
+    function createEnemy() {
+        //placeOnTerrain(enemy.body);
+        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 50);
+        //enemy.body.translateY(2);
+    }
+
+    var t = new Terrain(scene, mapWidth, mapHeight, 0.01);
     t.updateTerrain(t.width,t.height,t.segments,t.smoothingFactor);
 
 
@@ -344,13 +360,6 @@ function SceneSubject(scene, camera) {
 
     var skybox = new THREE.Mesh(geometry, cubeMaterials);
     scene.add(skybox);
-
-    function createEnemy() {
-        //placeOnTerrain(enemy.body);
-        randomPlaceOnTerrainEnemy(1000,1000, 50);
-        //enemy.body.translateY(2);
-    }
-
 
     var xSpeed = 0.3;
     var zSpeed = 0.3;
@@ -519,9 +528,11 @@ function SceneSubject(scene, camera) {
                     createEnemy();
                     addStaminaBall();
                     threeAdded = true;
-                    var fiveMinutes = 60 * 1,
+
+                    //2 Minutes
+                    var timerTime = 60 * 2,
                         display = document.querySelector('#timer');
-                    startTimer(fiveMinutes, display);
+                    startTimer(timerTime, display);
                 }
                 if (enemies.length > 0){
                     enemies.forEach(function (enemy) {

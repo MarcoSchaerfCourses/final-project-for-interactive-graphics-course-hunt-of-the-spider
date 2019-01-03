@@ -15,10 +15,13 @@ function SceneSubject(scene, camera) {
     var staminaBalls = [];
     var box;
     var score = 0;
+    var xSpeed = 0.3;
+    var zSpeed = 0.3;
+    var runSpeed = 2;
+    var runRotSpeed = 2;
     var scoreBox = document.getElementById("score");
     var quaternion = new THREE.Quaternion();
     var rayCaster = new THREE.Raycaster();
-    const staminaBar = document.querySelector('#stamina');
     const progressBar = document.querySelector('#progress');
     var noStamina = false;
     var gameOver = document.getElementById('gameover');
@@ -61,11 +64,15 @@ function SceneSubject(scene, camera) {
                 document.getElementsByTagName("span")[4].innerHTML = score;
                 document.removeEventListener("keydown", true);
                 document.removeEventListener("keyup", true);
+                xSpeed = 0;
+                zSpeed = 0;
             }
 
-            if (score == 20) {
+            else if (score == 20) {
                 youWin.style.visibility = 'visible';
                 document.getElementsByTagName("span")[5].innerHTML = score;
+                xSpeed = 0;
+                zSpeed = 0;
             }
         }, 1000);
     }
@@ -244,8 +251,8 @@ function SceneSubject(scene, camera) {
             var instance = object.clone();
             instance.position.x = (Math.random() - 0.5) * width;
             instance.position.z = (Math.random() - 0.5) * height;
-            collidableMeshList.push(instance.getObjectByName('trunk'));
             placeOnTerrain(instance);
+            collidableMeshList.push(instance.getObjectByName('trunk'));
             scene.add(instance);
         }
     }
@@ -316,22 +323,22 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        randomPlaceOnTerrainTree(mapWidth,mapHeight, 100, tree);
+        randomPlaceOnTerrainTree(mapWidth,mapHeight, 50, tree);
     }
 
     function addStaminaBall() {
         var ball = new THREE.Mesh(new THREE.SphereGeometry(10),new THREE.MeshLambertMaterial( {color: 0xFF0000}));
 
-        randomPlaceOnTerrainBall(mapWidth, mapHeight, 100, ball);
+        randomPlaceOnTerrainBall(mapWidth, mapHeight, 25, ball);
     }
 
     function createEnemy() {
         //placeOnTerrain(enemy.body);
-        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 50);
+        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 75);
         //enemy.body.translateY(2);
     }
 
-    var t = new Terrain(scene, mapWidth, mapHeight, 0.01);
+    var t = new Terrain(scene, mapWidth, mapHeight, 0.0001);
     t.updateTerrain(t.width,t.height,t.segments,t.smoothingFactor);
 
 
@@ -341,7 +348,7 @@ function SceneSubject(scene, camera) {
     var loadStartTime = performance.now();
     installModel('assets/spider/Only_Spider_with_Animations_Export_withoutHemi.fbx');
 
-    var geometry = new THREE.BoxGeometry(10000, 10000, 10000);
+    var geometry = new THREE.BoxGeometry(1000, 1000, 1000);
     var cubeMaterials =
         [
             new THREE.MeshBasicMaterial({map: new THREE.TGALoader().load("images/skybox/hills_ft.tga"), side: THREE.DoubleSide}
@@ -360,11 +367,6 @@ function SceneSubject(scene, camera) {
 
     var skybox = new THREE.Mesh(geometry, cubeMaterials);
     scene.add(skybox);
-
-    var xSpeed = 0.3;
-    var zSpeed = 0.3;
-    var runSpeed = 2;
-    var runRotSpeed = 2;
 
     const time = new THREE.Clock();
 

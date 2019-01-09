@@ -6,7 +6,7 @@ function SceneSubject(scene, camera) {
     var actions = {};
     var currentlyPressedKeys = {};
     var modelMixers = [];
-    var animationName = ['normal', 'walk_ani_back', 'walk_ani_vor', 'walk_left', 'walk_right', 'warte_pose', 'run_ani_vor', 'run_ani_back', 'run_left','run_right'];
+    var animationName = ['normal', 'walk_ani_back', 'walk_ani_vor', 'walk_left', 'walk_right', 'warte_pose', 'run_ani_vor', 'run_ani_back', 'run_left','run_right', 'die', 'attack'];
     var activeActionName = 'warte_pose';
     var actualAnimation = 0;
     var threeAdded = false;
@@ -24,9 +24,12 @@ function SceneSubject(scene, camera) {
     var rayCaster = new THREE.Raycaster();
     const progressBar = document.querySelector('#progress');
     var noStamina = false;
-    var gameOver = document.getElementById('gameover');
+    var gameOverOverLay = document.getElementById('gameover');
     var gameOverScore = document.querySelector('#score');
-    var youWin = document.getElementById('youwin');
+    var gameOver = false;
+    var died = false;
+    var youWinOverLay = document.getElementById('youwin');
+    var youWin = false;
     let percentComplete = 100;
 
     const updateAmount = 0.5;
@@ -47,32 +50,36 @@ function SceneSubject(scene, camera) {
     function startTimer(duration, display) {
         var timer = duration, minutes, seconds;
         setInterval(function () {
-            minutes = parseInt(timer / 60, 10)
-            seconds = parseInt(timer % 60, 10);
+            if (gameOver == false){
+                minutes = parseInt(timer / 60, 10)
+                seconds = parseInt(timer % 60, 10);
 
-            minutes = minutes < 10 ? "0" + minutes : minutes;
-            seconds = seconds < 10 ? "0" + seconds : seconds;
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
 
-            display.textContent = minutes + ":" + seconds;
+                display.textContent = minutes + ":" + seconds;
 
-            if (--timer < 0) {
-                timer = duration;
-            }
+                if (--timer < 0) {
+                    timer = duration;
+                }
 
-            if (timer == duration && score < 20){
-                gameOver.style.visibility = 'visible';
-                document.getElementsByTagName("span")[4].innerHTML = score;
-                document.removeEventListener("keydown", true);
-                document.removeEventListener("keyup", true);
-                xSpeed = 0;
-                zSpeed = 0;
-            }
+                if (timer == duration && score < 20){
+                    gameOverOverLay.style.visibility = 'visible';
+                    document.getElementsByTagName("span")[4].innerHTML = score;
+                    //document.removeEventListener("keydown", true);
+                    //document.removeEventListener("keyup", true);
+                    xSpeed = 0;
+                    zSpeed = 0;
+                    gameOver = true;
+                }
 
-            else if (score == 20) {
-                youWin.style.visibility = 'visible';
-                document.getElementsByTagName("span")[5].innerHTML = score;
-                xSpeed = 0;
-                zSpeed = 0;
+                else if (score == 20) {
+                    youWinOverLay.style.visibility = 'visible';
+                    document.getElementsByTagName("span")[5].innerHTML = score;
+                    xSpeed = 0;
+                    zSpeed = 0;
+                    youWin = true;
+                }
             }
         }, 1000);
     }
@@ -90,6 +97,10 @@ function SceneSubject(scene, camera) {
         actions.run_ani_back = mixer.clipAction(THREE.AnimationClip.findByName(clips,'Spider_Armature|run_ani_back'));
         actions.run_left = mixer.clipAction(THREE.AnimationClip.findByName(clips,'Spider_Armature|run_left'));
         actions.run_right = mixer.clipAction(THREE.AnimationClip.findByName(clips,'Spider_Armature|run_right'));
+        actions.die = mixer.clipAction(THREE.AnimationClip.findByName(clips, 'Spider_Armature|die'));
+        actions.die.loop = THREE.LoopOnce;
+        actions.die.clampWhenFinished = true;
+        actions.attack = mixer.clipAction(THREE.AnimationClip.findByName(clips, 'Spider_Armature|Attack'));
 
         return actions;
     }
@@ -105,6 +116,8 @@ function SceneSubject(scene, camera) {
         actions.run_ani_back.setEffectiveWeight(1);
         actions.run_left.setEffectiveWeight(1);
         actions.run_right.setEffectiveWeight(1);
+        actions.die.setEffectiveWeight(1);
+        actions.attack.setEffectiveWeight(1);
 
         return actions;
     }
@@ -120,6 +133,8 @@ function SceneSubject(scene, camera) {
         actions.run_ani_back.enable = true;
         actions.run_left.enable = true;
         actions.run_right.enable = true;
+        actions.die.enable = true;
+        actions.attack.enable = true;
 
         return actions;
     }
@@ -204,7 +219,6 @@ function SceneSubject(scene, camera) {
         actions = setEffectiveWeight(actions);
         actions = enableAllAction(actions);
 
-        collidableMeshList.push(model);
         scene.add(model);
         modelMixers.push({model, mixer});
     }
@@ -227,7 +241,7 @@ function SceneSubject(scene, camera) {
         fbx.boundingBox = new THREE.Box3().setFromObject(fbx);
         box = new THREE.BoxHelper( fbx, 0xffff00 );
         scene.add( box );
-        collidableMeshList.push(fbx);
+        //collidableMeshList.push(fbx);
         scene.add(fbx);
         modelMixers.push({fbx, mixer});
     }
@@ -252,7 +266,8 @@ function SceneSubject(scene, camera) {
             instance.position.x = (Math.random() - 0.5) * width;
             instance.position.z = (Math.random() - 0.5) * height;
             placeOnTerrain(instance);
-            collidableMeshList.push(instance.getObjectByName('trunk'));
+            //instance.getWorldPosition(instance.children[0].position);
+            collidableMeshList.push(instance);
             scene.add(instance);
         }
     }
@@ -388,9 +403,13 @@ function SceneSubject(scene, camera) {
             var globalVertex = localCenter.applyMatrix4( spider.matrix );
             var directionVector = globalVertex.sub( spider.position );
             var rayFront = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
-            var collisionResultsFront = rayFront.intersectObjects( collidableMeshList );
-            if ( collisionResultsFront.length > 0 && collisionResultsFront[0].distance - localCenter.z < 20 )
+            var collisionResultsFront = rayFront.intersectObjects( collidableMeshList,true );
+            if ( collisionResultsFront.length > 0 && collisionResultsFront[0].distance - localCenter.z < 20 ){
                 collidedFront = true;
+                //alert("Collusion");
+            }
+
+
             var rayBack = new THREE.Raycaster(originPoint, directionVector.clone().negate().normalize());
             var collisionResultsBack = rayBack.intersectObjects(collidableMeshList);
             if (collisionResultsBack.length > 0 && collisionResultsBack[0].distance - localCenter.z < 20)
@@ -408,11 +427,23 @@ function SceneSubject(scene, camera) {
                 alert("Hülooo");
             }*/
 
+            if (gameOver == true && died == false){
+                died = true;
+                modelMixers[0].mixer.stopAllAction();
+                actions.die.play();
+                // actualAnimation = 10;
+                // fadeAction(animationName[actualAnimation]);
+            }
+            else if (youWin == true && died == false){
+                died = true;
+                modelMixers[0].mixer.stopAllAction();
+                actions.attack.play();
+            }
             // Pressed On 'W'
-            if (currentlyPressedKeys[87] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
+            if (currentlyPressedKeys[87] == true && ((currentlyPressedKeys[16] != true) || noStamina) && !gameOver && !youWin) {
                 if (actualAnimation != 2){
                     actualAnimation = 2;
-                    fadeAction(animationName[actualAnimation], actions);
+                    fadeAction(animationName[actualAnimation]);
                 }
                 if (collidedFront == false){
                     let deltaX = -xSpeed * Math.sin(spider.rotation.x);
@@ -425,10 +456,10 @@ function SceneSubject(scene, camera) {
                 }
             }
             //Pressed on 'S'
-            if (currentlyPressedKeys[83] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
+            if (currentlyPressedKeys[83] == true && ((currentlyPressedKeys[16] != true) || noStamina) && !gameOver && !youWin) {
                 if (actualAnimation != 1){
                     actualAnimation = 1;
-                    fadeAction(animationName[actualAnimation], actions);
+                    fadeAction(animationName[actualAnimation]);
                 }
                 if (collidedBack == false){
                     let deltaX = xSpeed * Math.sin(spider.rotation.x);
@@ -440,29 +471,29 @@ function SceneSubject(scene, camera) {
                 }
             }
             //Pressed on 'A'
-            if (currentlyPressedKeys[65] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
+            if (currentlyPressedKeys[65] == true && ((currentlyPressedKeys[16] != true) || noStamina) && !gameOver && !youWin) {
                 if (actualAnimation !=3){
                     actualAnimation = 3;
-                    fadeAction(animationName[actualAnimation], actions);
+                    fadeAction(animationName[actualAnimation]);
                 }
                 spider.rotation.y += 0.02;
 
             }
             //Pressed on 'D'
-            if (currentlyPressedKeys[68] == true && ((currentlyPressedKeys[16] != true) || noStamina)) {
+            if (currentlyPressedKeys[68] == true && ((currentlyPressedKeys[16] != true) || noStamina) && !gameOver && !youWin) {
                 if (actualAnimation != 4){
                     actualAnimation = 4;
-                    fadeAction(animationName[actualAnimation], actions);
+                    fadeAction(animationName[actualAnimation]);
                 }
                 spider.rotation.y -= 0.02;
             }
             //Pressed on 'Shift'
-            if (currentlyPressedKeys[16] == true && percentComplete > 0) {
+            if (currentlyPressedKeys[16] == true && percentComplete > 0 && !gameOver && !youWin) {
                 //Pressed on 'W' while 'Shift' pressed
                 if (currentlyPressedKeys[87] == true) {
                     if (actualAnimation != 6) {
                         actualAnimation = 6;
-                        fadeAction(animationName[actualAnimation], actions);
+                        fadeAction(animationName[actualAnimation]);
                     }
                     let deltaX = -runSpeed * xSpeed * Math.sin(spider.rotation.x);
                     let deltaZ = -runSpeed * zSpeed * Math.cos(spider.rotation.z);
@@ -474,7 +505,7 @@ function SceneSubject(scene, camera) {
                 if (currentlyPressedKeys[83] == true){
                     if (actualAnimation != 7) {
                         actualAnimation = 7;
-                        fadeAction(animationName[actualAnimation], actions);
+                        fadeAction(animationName[actualAnimation]);
                     }
                     let deltaX = runSpeed * xSpeed * Math.sin(spider.rotation.x);
                     let deltaZ = runSpeed * zSpeed * Math.cos(spider.rotation.z);
@@ -487,7 +518,7 @@ function SceneSubject(scene, camera) {
                 if (currentlyPressedKeys[65] == true){
                     if (actualAnimation != 8) {
                         actualAnimation = 8;
-                        fadeAction(animationName[actualAnimation], actions);
+                        fadeAction(animationName[actualAnimation]);
                     }
                     spider.rotation.y += runRotSpeed * 0.02;
                 }
@@ -495,16 +526,16 @@ function SceneSubject(scene, camera) {
                 if (currentlyPressedKeys[68] == true){
                     if (actualAnimation != 9) {
                         actualAnimation = 9;
-                        fadeAction(animationName[actualAnimation], actions);
+                        fadeAction(animationName[actualAnimation]);
                     }
                     spider.rotation.y -= runRotSpeed * 0.02;
                 }
+
                 percentComplete -= 0.1;
 
                 //progressBar.style.width = percentComplete + '%';
 
                 if (percentComplete <= 0) {
-                    //progressBar.style.backgroundColor = 'blue';
                     percentComplete = 0;
                     noStamina = true;
                 }
@@ -603,8 +634,10 @@ function SceneSubject(scene, camera) {
 
     this.onKeyRelease = function(keyCode) {
         currentlyPressedKeys[keyCode] = false;
-        fadeAction(animationName[5], actions);
-        actualAnimation = 5;
+        if (gameOver != true){
+            fadeAction(animationName[5]);
+            actualAnimation = 5;
+        }
     }
 
     this.onKeyDown = function(keyCode) {

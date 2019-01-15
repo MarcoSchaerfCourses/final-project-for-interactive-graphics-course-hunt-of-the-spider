@@ -24,7 +24,6 @@ function SceneManager(canvas) {
         const DPR = (window.devicePixelRatio) ? window.devicePixelRatio : 1;
 
         renderer.autoClear = false;
-        //renderer.setClearColor(0x00ff00);
         renderer.setPixelRatio(DPR);
         renderer.setSize(width, height);
 

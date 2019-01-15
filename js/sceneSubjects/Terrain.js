@@ -285,10 +285,10 @@ function Terrain(scene, width, height, fog) {
 
         this.mesh.rotation.x = Math.PI / 180 * (-90);
         this.mesh.receiveShadow = true;
-        this.helper = new THREE.FaceNormalsHelper(this.mesh, 10, 0x00ff00, 1);
+        // this.helper = new THREE.FaceNormalsHelper(this.mesh, 10, 0x00ff00, 1);
 
         scene.add(this.mesh);
-        scene.add(this.helper);
+        // scene.add(this.helper);
     };
 
     this.setFog = function(fog) {

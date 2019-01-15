@@ -1,6 +1,4 @@
 const canvas = document.getElementById("canvas");
-//document.getElementById("animate").disable = false;
-
 const sceneManager = new SceneManager(canvas);
 
 bindEventListeners();
@@ -11,9 +9,6 @@ function bindEventListeners() {
     document.onkeyup = documentKeyUp;
     document.onkeydown = documentKeyDown;
 	resizeCanvas();
-	//window.onkeydown = documentKeyDown;
-	//documentKeyDown(window.onkeydown)
-	//document.addEventListener("keydown", documentKeyDown, false);
 }
 
 function resizeCanvas() {

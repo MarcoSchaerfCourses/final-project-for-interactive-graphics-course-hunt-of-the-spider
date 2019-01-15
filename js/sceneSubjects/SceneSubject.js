@@ -13,14 +13,13 @@ function SceneSubject(scene, camera) {
     var collidableMeshList = [];
     var enemies = [];
     var staminaBalls = [];
-    var box;
+    //var box;
     var score = 0;
     var xSpeed = 0.3;
     var zSpeed = 0.3;
     var runSpeed = 2;
     var runRotSpeed = 2;
     var scoreBox = document.getElementById("score");
-    var quaternion = new THREE.Quaternion();
     var rayCaster = new THREE.Raycaster();
     const progressBar = document.querySelector('#progress');
     var noStamina = false;
@@ -32,7 +31,6 @@ function SceneSubject(scene, camera) {
     var youWin = false;
     let percentComplete = 100;
 
-    const updateAmount = 0.5;
 
 
     function getExtantion(filename) {
@@ -66,8 +64,6 @@ function SceneSubject(scene, camera) {
                 if (timer == duration && score < 20){
                     gameOverOverLay.style.visibility = 'visible';
                     document.getElementsByTagName("span")[4].innerHTML = score;
-                    //document.removeEventListener("keydown", true);
-                    //document.removeEventListener("keyup", true);
                     xSpeed = 0;
                     zSpeed = 0;
                     gameOver = true;
@@ -239,8 +235,8 @@ function SceneSubject(scene, camera) {
         actions.warte_pose.play();
         //fbx.add(camera);
         fbx.boundingBox = new THREE.Box3().setFromObject(fbx);
-        box = new THREE.BoxHelper( fbx, 0xffff00 );
-        scene.add( box );
+        // box = new THREE.BoxHelper( fbx, 0xffff00 );
+        // scene.add( box );
         //collidableMeshList.push(fbx);
         scene.add(fbx);
         modelMixers.push({fbx, mixer});
@@ -267,7 +263,8 @@ function SceneSubject(scene, camera) {
             instance.position.z = (Math.random() - 0.5) * height;
             placeOnTerrain(instance);
             //instance.getWorldPosition(instance.children[0].position);
-            collidableMeshList.push(instance);
+            instance.children[0].localToWorld(instance.children[0].position);
+            collidableMeshList.push(instance.children[0]);
             scene.add(instance);
         }
     }
@@ -280,13 +277,13 @@ function SceneSubject(scene, camera) {
             enemy.body.scale.set(0.5,0.5,0.5);
             enemy.body.translateY(1);
             enemy.boundingBox =  new THREE.Box3().setFromObject(enemy.body);
-            enemy.boxHelper = new THREE.BoxHelper( enemy.body, 0xffff00 );
+            // enemy.boxHelper = new THREE.BoxHelper( enemy.body, 0xffff00 );
 
 
             console.log('Enemy created');
             placeOnTerrain(enemy.body);
             scene.add(enemy.body);
-            scene.add(enemy.boxHelper);
+            // scene.add(enemy.boxHelper);
             enemies.push(enemy);
         }
     }
@@ -338,22 +335,22 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        randomPlaceOnTerrainTree(mapWidth,mapHeight, 50, tree);
+        randomPlaceOnTerrainTree(mapWidth,mapHeight, 30, tree);
     }
 
     function addStaminaBall() {
         var ball = new THREE.Mesh(new THREE.SphereGeometry(10),new THREE.MeshLambertMaterial( {color: 0xFF0000}));
 
-        randomPlaceOnTerrainBall(mapWidth, mapHeight, 25, ball);
+        randomPlaceOnTerrainBall(mapWidth, mapHeight, 20, ball);
     }
 
     function createEnemy() {
         //placeOnTerrain(enemy.body);
-        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 75);
+        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 70);
         //enemy.body.translateY(2);
     }
 
-    var t = new Terrain(scene, mapWidth, mapHeight, 0.0001);
+    var t = new Terrain(scene, mapWidth, mapHeight, 0.01);
     t.updateTerrain(t.width,t.height,t.segments,t.smoothingFactor);
 
 
@@ -415,24 +412,10 @@ function SceneSubject(scene, camera) {
             if (collisionResultsBack.length > 0 && collisionResultsBack[0].distance - localCenter.z < 20)
                 collidedBack = true;
 
-            /*var globalCenter = localCenter.applyMatrix4( spider.matrix );
-            var direction = new THREE.Vector3(0,0,-1).applyQuaternion(spider.quaternion);
-
-            var ray = new THREE.Raycaster( originPoint, direction.normalize() );
-            var collisionResults = ray.intersectObjects( collidableMeshList );
-            if ( collisionResults.length > 0 && collisionResults[0].distance < localCenter.z + 1 )
-                collided = true;*/
-
-            /*if (collisionResults.length > 0){
-                alert("Hülooo");
-            }*/
-
             if (gameOver == true && died == false){
                 died = true;
                 modelMixers[0].mixer.stopAllAction();
                 actions.die.play();
-                // actualAnimation = 10;
-                // fadeAction(animationName[actualAnimation]);
             }
             else if (youWin == true && died == false){
                 died = true;
@@ -448,8 +431,6 @@ function SceneSubject(scene, camera) {
                 if (collidedFront == false){
                     let deltaX = -xSpeed * Math.sin(spider.rotation.x);
                     let deltaZ = -zSpeed * Math.cos(spider.rotation.z);
-
-                    //spider.position.z -= ySpeed;
 
                     spider.translateX(deltaX);
                     spider.translateZ(deltaZ);
@@ -467,7 +448,6 @@ function SceneSubject(scene, camera) {
 
                     spider.translateX(deltaX);
                     spider.translateZ(deltaZ);
-                    //spider.position.z += ySpeed;
                 }
             }
             //Pressed on 'A'
@@ -495,11 +475,13 @@ function SceneSubject(scene, camera) {
                         actualAnimation = 6;
                         fadeAction(animationName[actualAnimation]);
                     }
-                    let deltaX = -runSpeed * xSpeed * Math.sin(spider.rotation.x);
-                    let deltaZ = -runSpeed * zSpeed * Math.cos(spider.rotation.z);
+                    if (collidedFront == false){
+                        let deltaX = -runSpeed * xSpeed * Math.sin(spider.rotation.x);
+                        let deltaZ = -runSpeed * zSpeed * Math.cos(spider.rotation.z);
 
-                    spider.translateX(deltaX);
-                    spider.translateZ(deltaZ);
+                        spider.translateX(deltaX);
+                        spider.translateZ(deltaZ);
+                    }
                 }
                 //Pressed on 'S' while 'Shift' pressed
                 if (currentlyPressedKeys[83] == true){
@@ -507,12 +489,13 @@ function SceneSubject(scene, camera) {
                         actualAnimation = 7;
                         fadeAction(animationName[actualAnimation]);
                     }
-                    let deltaX = runSpeed * xSpeed * Math.sin(spider.rotation.x);
-                    let deltaZ = runSpeed * zSpeed * Math.cos(spider.rotation.z);
+                    if (collidedBack == false){
+                        let deltaX = runSpeed * xSpeed * Math.sin(spider.rotation.x);
+                        let deltaZ = runSpeed * zSpeed * Math.cos(spider.rotation.z);
 
-                    spider.translateX(deltaX);
-                    spider.translateZ(deltaZ);
-
+                        spider.translateX(deltaX);
+                        spider.translateZ(deltaZ);
+                    }
                 }
                 //Pressed on 'A' while 'Shift' pressed
                 if (currentlyPressedKeys[65] == true){
@@ -533,20 +516,12 @@ function SceneSubject(scene, camera) {
 
                 percentComplete -= 0.1;
 
-                //progressBar.style.width = percentComplete + '%';
-
                 if (percentComplete <= 0) {
                     percentComplete = 0;
                     noStamina = true;
                 }
             }
             modelMixers.forEach(({mixer}) => {mixer.update(time.getDelta());});
-
-            /*modelMixers[0].fbx.getWorldPosition(controls.target);
-            direction.subVectors( camera.position, controls.target );
-            direction.normalize().multiplyScalar( 100 );
-            camera.position.copy( direction.add( controls.target ) );*/
-            //controls.target= modelMixers[0].fbx.position;
 
             var relativeCameraOffset = new THREE.Vector3(0,200,400);
             var cameraOffset = relativeCameraOffset.applyMatrix4( spider.matrixWorld );
@@ -572,31 +547,16 @@ function SceneSubject(scene, camera) {
                         enemy.moveForward();
                         enemy.boundingBox.setFromObject(enemy.body);
                         placeOnTerrain(enemy.body);
-                        enemy.boxHelper.update();
+                        // enemy.boxHelper.update();
                     })
                 }
 
                 rayCaster.set(modelMixers[0].fbx.position.setY(1000), new THREE.Vector3(0, -1, 0));
                 var intersects = rayCaster.intersectObject(t.meshGround);
                 if (intersects.length > 0){
-
-                    /*if (spider.up != intersects[0].face.normal){
-                        quaternion.setFromUnitVectors(spider.up, intersects[0].face.normal);
-                        spider.applyQuaternion(quaternion);
-                        spider.up = intersects[0].face.normal;//Z axis up
-                        //spider.rotateX(-Math.PI /2);
-                    }*/
-
                     spider.position.setY(intersects[0].point.y);
                 }
 
-
-                /*rayCaster.set(new THREE.Vector3(originPoint.x, spider.boundingBox.min.y, originPoint.z), new THREE.Vector3(0,0,1));
-                const enemyBodies = enemies.map(enemy=> enemy.body);
-                var intersectsEnemy = rayCaster.intersectObjects(enemyBodies);
-                if ( intersectsEnemy.length > 0 && intersectsEnemy[0].distance - localCenter.z < 20 ) {
-                    scene.remove(intersectsEnemy[0].object);
-                }*/
                 var collusion = false;
                 enemies.forEach(function (enemy) {
                     if (spider.boundingBox.intersectsBox(enemy.boundingBox)) {
@@ -604,7 +564,6 @@ function SceneSubject(scene, camera) {
                         enemies = arrayRemove(enemies, enemy);
                         scene.remove(enemy.body);
                         score += 1;
-                        //spider.scale.set(score/20,score/20,score/20);
                     }
                 })
                 staminaBalls.forEach(function (staminaBall) {
@@ -615,14 +574,13 @@ function SceneSubject(scene, camera) {
                         scene.remove(staminaBall);
                     }
                 })
-                box.update();
+                // box.update();
                 spider.boundingBox.setFromObject(spider);
                 if (percentComplete <= 100 && currentlyPressedKeys[16] == false) {
                     percentComplete += 0.1;
                     noStamina = false;
                 }
                 if ( percentComplete >= 100 ) {
-                    //progressBar.style.backgroundColor = 'blue'
                     percentComplete = 100;
                 }
                 scoreBox.innerHTML = "Score: " + score;

@@ -76,7 +76,7 @@ function Enemy() {
         }
     });
 
-    this.moveForward = function(angle){
+    this.moveForward = function(){
         this.clock.start();
         this.rotateAboutPoint(this.frontLeft, new THREE.Vector3(0,0,1), new THREE.Vector3(0,1,0),  Math.sin(this.frontLeftAngle /2) / 10 );
         this.frontLeftAngle++;
@@ -92,7 +92,7 @@ function Enemy() {
         else {
             this.rotate = false;
         }
-        if (this.body.position.x < -5000 && this.body.position.x > 5000 && this.body.position.z < -5000 && this.body.position.z > 5000) {
+        if (this.body.position.x < -1000 && this.body.position.x > 1000 && this.body.position.z < -1000 && this.body.position.z > 1000) {
             this.translate = 0;
         }
         else {
@@ -109,10 +109,5 @@ function Enemy() {
             this.body.translateX(deltaX);
             this.body.translateZ(deltaZ);
         }
-
-
-        //this.frontLeft.rotateY(angle);
-
     }
-    //scene.add(this.body);
 }

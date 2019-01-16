@@ -27,9 +27,6 @@ Temporary Items
 .apdisk
 
 # Directories ignored
-images/
-fonts/
-assets/
 .idea/
 
 # CMake

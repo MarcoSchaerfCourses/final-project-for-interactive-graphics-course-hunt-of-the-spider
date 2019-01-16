@@ -13,6 +13,7 @@ function SceneSubject(scene, camera) {
     var collidableMeshList = [];
     var enemies = [];
     var staminaBalls = [];
+    var trees = [];
     //var box;
     var score = 0;
     var xSpeed = 0.3;
@@ -263,8 +264,7 @@ function SceneSubject(scene, camera) {
             instance.position.z = (Math.random() - 0.5) * height;
             placeOnTerrain(instance);
             //instance.getWorldPosition(instance.children[0].position);
-            instance.children[0].localToWorld(instance.children[0].position);
-            collidableMeshList.push(instance.children[0]);
+            trees.push(instance);
             scene.add(instance);
         }
     }
@@ -335,7 +335,7 @@ function SceneSubject(scene, camera) {
 
         tree.scale.set(30,30,30);
 
-        randomPlaceOnTerrainTree(mapWidth,mapHeight, 30, tree);
+        randomPlaceOnTerrainTree(mapWidth,mapHeight, 25, tree);
     }
 
     function addStaminaBall() {
@@ -346,7 +346,7 @@ function SceneSubject(scene, camera) {
 
     function createEnemy() {
         //placeOnTerrain(enemy.body);
-        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 70);
+        randomPlaceOnTerrainEnemy(mapWidth,mapHeight, 65);
         //enemy.body.translateY(2);
     }
 
@@ -386,7 +386,16 @@ function SceneSubject(scene, camera) {
         if (actions.warte_pose){
 
             const spider = scene.getObjectByName("spider");
+            
+            if (trees.length >0){
+                trees.forEach(function (tree) {
+                    a = tree.children[0].localToWorld(tree.children[0].clone().position);
+                    b = tree.children[0].clone();
+                    b.position.set(a.x,a.y,a.z);
 
+                    collidableMeshList.push(b);
+                })
+            }
             var originPoint = spider.position.clone();
 
             var collidedFront = false;
@@ -396,7 +405,7 @@ function SceneSubject(scene, camera) {
             localCenter.x = (spider.boundingBox.max.x + spider.boundingBox.min.x) / 2;
             localCenter.y = (spider.boundingBox.max.y + spider.boundingBox.min.y) / 2;
             localCenter.z = (spider.boundingBox.max.z + spider.boundingBox.min.z) / 2;
-
+            
             var globalVertex = localCenter.applyMatrix4( spider.matrix );
             var directionVector = globalVertex.sub( spider.position );
             var rayFront = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );

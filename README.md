@@ -1,1 +1,1 @@
-This is a final project of interactive graphic course.
+This is a final project of interactive graphic course. Live demo can be found at: https://marcoschaerfcourses.github.io/hunt-of-the-spider/
